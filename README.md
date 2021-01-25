@@ -1,15 +1,19 @@
 # cisco-dnac-network-devices-cfg-backup-s3
 
-**Disclaimer**  
-_This solution leverages currently unpublished Cisco DNA Center APIs (as of DATE)_  
-_Do not use in production_
-
 Download your Cisco Network Device Configuration from [Cisco DNA Center](https://www.cisco.com/c/en/us/products/cloud-systems-management/dna-center/index.html) (REST API).  
 Then store them on Object Storage ([S3 compatible](https://en.wikipedia.org/wiki/Amazon_S3#S3_API_and_competing_services)), hosted in Public Cloud/Private Cloud/On-Prem  
 * Script downloads and stores (per device)
   * RUNNINGCONFIG
   * STARTUPCONFIG
+  * vlan.dat
 * _(Limited to Cisco IOS-XE Devices)_
+
+**version 1.1**
+- [x] Supported APIs for Cisco DNA Center version 2.1
+
+**version 1.0**
+- [x] Unsupported APIs for Cisco DNA Center version 1.3
+  - Do not use in production
 
 ### Why?
 * Store your configs, as long as you want
@@ -46,10 +50,32 @@ _(aws s3)_
   - ```git clone https://github.com/robertcsapo/cisco-dnac-network-devices-cfg-backup-s3```
 
 * Setup
-  - Edit the ```docker-compose.yaml``` for your personal settings.  
+  - Edit the ```docker-compose.yaml``` for your Environments settings/credentials.  
   _(Default is AWS S3 Storage)_
+  ```
+  version: '3'
+  services:
+    collector:
+      image: robertcsapo/cisco-dnac-network-devices-cfg-backup-s3
+      environment:
+       - DNAC_HOST=dnac.example.tld
+       - DNAC_USER=exampleUsername
+       - DNAC_PASS=examplePassword
+       - DNAC_SSL_VERIFY=False
+       - STORAGE=AWS
+       - S3BUCKET=cisco-dnac-network-devices-cfg-backup-s3
+       - AWS_ACCESS_KEY=XXXXACCESS_KEY
+       - AWS_SECRET_KEY=YYYYSECRET_KEY
+      network_mode: bridge
+  ```
   - If you want to use other Storage providers.  
   Edit ```docker-compose-<provider>.yaml``` file instead.
+  ```
+  docker-compose-aws.yaml
+  docker-compose-do.yaml
+  docker-compose-gcp.yaml
+  docker-compose-minio.yaml
+  ```
 
 * Run service
   - Default
@@ -96,22 +122,23 @@ Use this settings if not using Environment or want to override
                           MinIO Inc. SECRET_KEY
                           MinIO Inc. Server ENDPOINT_URL
     --insecure            Disables SSL/TLS verification
+    --api API             Cisco DNA Center Platform Version (default: 2.1)
     --version             show program's version number and exit
 ```
   * Example
-    - ```docker run robertcsapo/cisco-dnac-network-devices-cfg-backup-s3 --dnac DNAC_HOST DNAC_USER DNAC_PASS --aws S3BUCKET AWS_ACCESS_KEY AWS_SECRET_KEY```
+    - ```docker run robertcsapo/cisco-dnac-network-devices-cfg-backup-s3 --dnac dnac.example.tld exampleUsername examplePassword --aws cisco-dnac-network-devices-cfg-backup-s3 XXXXACCESS_KEY YYYYSECRET_KEY```
 
-  - Docker with Environment
+  - Docker with Environments settings/credentials
     * ```docker run robertcsapo/cisco-dnac-network-devices-cfg-backup-s3 -e DNAC_HOST <value> -e DNAC_USER <value> -e DNAC_PASS <value> -e S3BUCKET <value> -e AWS_ACCESS_KEY <value> -e AWS_SECRET_KEY <value> -e STORAGE=AWS ```  
     _(Change STORAGE to another provider if needed)_
     - OS Environments
       - ```DNAC_HOST=dnac.example.tld```
-      - ```DNAC_USER=username```
-      - ```DNAC_PASS=password```
+      - ```DNAC_USER=exampleUsername```
+      - ```DNAC_PASS=examplePassword```
       - ```STORAGE=AWS (or GCP, DO, MINIO)```
       - ```S3BUCKET=bucket```
       - ```AWS_ACCESS_KEY=key```
-      - ```AWS_SECRET_KEY=key```
+      - ```AWS_SECRET_KEY=key```  
       _(check docker-compose-<provider>.yaml for OS Environments)_
 
 
